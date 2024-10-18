@@ -33,7 +33,7 @@
             border-top: 100px solid pink;
         }
         .damage {
-            color: #FF0000;
+            color: #ff0000;
             font-weight: bold;
             position: absolute;
             top: -20px;
@@ -59,6 +59,7 @@
         使用武器選択: 
         <select id="weapon-select">
             <option value="fist">素手</option>
+            <option value="meater">ボコボコのハンマー</option>
         </select>
     </div>
     <div>
@@ -81,7 +82,7 @@
         // 肉のデータ
         const meatData = {
             "normal-meat": { "hp": 20, "exp": 4, "defense": 5, "toughness": 2 },
-            "tough-meat": { "hp": 40, "exp": 5, "defense": 24, "toughness": 10 },
+            "tough-meat": { "hp": 40, "exp": 10, "defense": 20, "toughness": 10 },
             "fish-meat": { "hp": 15, "exp": 3, "defense": 2, "toughness": 1 }
         };
 
@@ -108,6 +109,7 @@
 
         const weapons = {
             "fist": { "damage": 3, "cooldown": 1000 },
+            "meater": { "damage": 4.95, "cooldown": 625 },
             "stone-sword": { "damage": 7, "cooldown": 500, "price": 5, "requiredExp": 0 },
             "grade-blade": { "damage": 10, "cooldown": 1310, "price": 10, "requiredExp": 10 },
             "rapier": { "damage": 4, "cooldown": 250, "price": 7, "requiredExp": 30 },
@@ -123,7 +125,7 @@
         };
 
         let buyWeaponList = ["stone-sword", "grade-blade", "poison-spear", "spider-sword", "rune-great-blade", "rapier"];
-        let availableWeapons = ["fist"];
+        let availableWeapons = ["fist", "meater"];
 
         meatElement.addEventListener('click', attackMeat);
         sellButton.addEventListener('click', sellMeatPoints);
@@ -175,7 +177,7 @@
 
         function calculateDamage(damage, defense, toughness) {
             // 防御力と耐久度を考慮したダメージ計算式
-            const reducedDamage = damage - ((defense / 25) + toughness - (damage / 4));
+            const reducedDamage = damage - ((defense / 12.5) + toughness - (damage / 4));
             return Math.max(1, reducedDamage);
         }
 
