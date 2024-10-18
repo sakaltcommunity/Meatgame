@@ -47,9 +47,9 @@
 <body>
     <h1>肉狩りゲーム</h1>
     <div id="meat">肉</div>
-    <div>肉 HP: <span id="meat-hp">20</span></div>
     <button id="sell-button">肉ポイントを玉に変換</button>
     <div>
+        <div>肉 HP: <span id="meat-hp">20</span></div>
         肉ポイント: <span id="meat-points">0</span><br>
         玉: <span id="coins">0</span><br>
         経験値: <span id="experience">0</span>
@@ -108,7 +108,7 @@
         const meatSelect = document.getElementById('meat-select');
 
         const weapons = {
-            "fist": { "damage": 3, "cooldown": 1000 },
+            "fist": { "damage": 8, "cooldown": 1000 },
             "meater": { "damage": 4.95, "cooldown": 625 },
             "stone-sword": { "damage": 7, "cooldown": 500, "price": 5, "requiredExp": 0 },
             "grade-blade": { "damage": 10, "cooldown": 1310, "price": 10, "requiredExp": 10 },
@@ -157,7 +157,7 @@
 
             meatHp -= damage;
             meatHpElement.textContent = Math.max(0, Math.floor(meatHp));
-            showDamage(Math.floor(damage));
+            showDamage(damage);
 
             if (meatHp <= 0) {
                 meatHp = meatData[currentMeat].hp;
