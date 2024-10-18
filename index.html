@@ -174,13 +174,14 @@
         }
 
         function calculateDamage(damage, defense, toughness) {
-            const reducedDamage = damage - (defense / 25 - (toughness - damage / 4));
-            return Math.max(1, Math.min(damage, reducedDamage));
+            // 防御力と耐久度を考慮したダメージ計算式
+            const reducedDamage = damage - ((defense / 25) + toughness - (damage / 4));
+            return Math.max(1, reducedDamage);
         }
 
         function showDamage(damage) {
             const damageElement = document.createElement('div');
-            damageElement.classList.add('damage-output');
+            damageElement.classList.add('damage');  // クラス名を 'damage' に修正
             damageElement.textContent = `${damage}`;
             damageOutputElement.appendChild(damageElement);
             
@@ -190,40 +191,51 @@
         }
 
         function sellMeatPoints() {
-            coins += meatPoints;
-            meatPoints = 0;
-            meatPointsElement.textContent = meatPoints;
-            coinsElement.textContent = coins;
-        }
-
-        function unlockWeapons() {
-            for (const weaponKey of buyWeaponList) {
-                const weapon = weapons[weaponKey];
-                if (experience >= weapon.requiredExp && !availableWeapons.includes(weaponKey)) {
-                    const option = document.createElement('option');
-                    option.value = weaponKey;
-                    option.text = weaponKey;
-                    buyWeaponSelect.add(option);
-                }
+            if (meatPoints >= 5) {
+                meatPoints -= 5;
+                coins += 1;
+                meatPointsElement.textContent = meatPoints;
+                coinsElement.textContent = coins;
             }
         }
 
         function buyWeapon() {
             const selectedWeapon = buyWeaponSelect.value;
-            const weapon = weapons[selectedWeapon];
-            if (coins >= weapon.price && !availableWeapons.includes(selectedWeapon)) {
-                coins -= weapon.price;
-                coinsElement.textContent = coins;
+            const weaponData = weapons[selectedWeapon];
+
+            if (coins >= weaponData.price) {
+                coins -= weaponData.price;
                 availableWeapons.push(selectedWeapon);
-                const option = document.createElement('option');
-                option.value = selectedWeapon;
-                option.text = selectedWeapon;
-                weaponSelect.add(option);
-                alert(`${selectedWeapon} を購入しました！`);
-            } else {
-                alert("購入するための玉が足りません！");
+                updateWeaponSelect();
+                coinsElement.textContent = coins;
             }
         }
+
+        function updateWeaponSelect() {
+            weaponSelect.innerHTML = '';
+            availableWeapons.forEach(weapon => {
+                const option = document.createElement('option');
+                option.value = weapon;
+                option.textContent = weapon;
+                weaponSelect.appendChild(option);
+            });
+        }
+
+        function unlockWeapons() {
+            buyWeaponList.forEach(weapon => {
+                if (experience >= weapons[weapon].requiredExp && !availableWeapons.includes(weapon)) {
+                    const option = document.createElement('option');
+                    option.value = weapon;
+                    option.textContent = weapon;
+                    buyWeaponSelect.appendChild(option);
+                }
+            });
+        }
+
+        function applyPoison() {
+            console.log("毒効果が適用されました！");
+        }
+
     </script>
 </body>
 </html>
