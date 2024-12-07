@@ -238,17 +238,20 @@
 
         function buyWeapon() {
             const selectedWeapon = buyWeaponSelect.value;
-            const weapon = weapons[selectedWeapon];
+            if (selectedWeapon === "") return; // 武器が選択されていない場合は何もしない
 
-            if (selectedWeapon && !availableWeapons.includes(selectedWeapon)) {
-                if (weapon.price <= coins && experience >= weapon.requiredExp) {
-                    availableWeapons.push(selectedWeapon);
-                    coins -= weapon.price;
-                    coinsElement.textContent = coins;
-                    updateWeaponSelect();
-                }
+            const weaponData = weapons[selectedWeapon];
+
+            if (coins >= weaponData.price) {
+                coins -= weaponData.price;
+                availableWeapons.push(selectedWeapon);
+                updateWeaponSelect();
+                coinsElement.textContent = coins;
+
+                alert(`${selectedWeapon} を購入しました！`);
+            } else {
+                alert("コインが足りません！");
             }
-        }
 
         function applyPoison(poison) {
             if (!poisonEffect) {
