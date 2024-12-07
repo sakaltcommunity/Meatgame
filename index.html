@@ -75,6 +75,8 @@
             <option value="normal-meat">通常の肉</option>
             <option value="tough-meat">固い肉</option>
             <option value="fish-meat">魚肉</option>
+            <option value="atlas-meat">アトラス肉</option>
+            <option value="block-on">ブロックオン</option>
         </select>
     </div>
 
@@ -84,29 +86,30 @@
             fire: { strongAgainst: ["earth"], resistantTo: ["water"] },
             earth: { strongAgainst: ["water"], resistantTo: ["fire"] },
             water: { strongAgainst: ["fire"], resistantTo: ["earth"] },
-            wind: { strongAgainst: ["fire"], resistantTo: [] },
-            grass: { strongAgainst: ["water"], resistantTo: [] },
-            iron: { strongAgainst: ["earth"], resistantTo: ["fire"] },
-            electricity: { strongAgainst: ["water"], resistantTo: [] },
-            light: { strongAgainst: ["dark"], resistantTo: [] },
-            dark: { strongAgainst: ["light"], resistantTo: [] },
-            true: { strongAgainst: [], resistantTo: [] },
-            ancient: { strongAgainst: [], resistantTo: [] },
-            divine: { strongAgainst: [], resistantTo: [] }
+            wind: { strongAgainst: ["fire"], resistantTo: ["light"] },
+            grass: { strongAgainst: ["water"], resistantTo: ["dark"] },
+            iron: { strongAgainst: ["grass"], resistantTo: ["fire"] },
+            electricity: { strongAgainst: ["iron"], resistantTo: [] },
+            light: { strongAgainst: ["dark"], resistantTo: ["grass"] },
+            dark: { strongAgainst: ["light"], resistantTo: ["fire"] },
+            true: { strongAgainst: ["light"], resistantTo: ["dark"] },
+            ancient: { strongAgainst: ["true"], resistantTo: ["dark"] },
+            divine: { strongAgainst: ["ancient"], resistantTo: ["light"] }
         };
 
         // 肉のデータ
         const meatData = {
             "normal-meat": { "hp": 20, "exp": 4, "defense": 5, "toughness": 2, "attribute": "fire" },
-            "tough-meat": { "hp": 40, "exp": 5, "defense": 24, "toughness": 10, "attribute": "earth" },
-            "atlas-meat": { "hp": 256, "exp": 12, "defense": 26, "toughness": 6, "attribute": "water" },
+            "tough-meat": { "hp": 40, "exp": 5, "defense": 24, "toughness": 10, "attribute": "iron" },
+            "atlas-meat": { "hp": 256, "exp": 12, "defense": 26, "toughness": 6, "attribute": "grass" },
+            "block-on": { "hp": 330, "exp": 16, "defense": 11, "toughness": 3, "attribute": "ancient" },
             "fish-meat": { "hp": 15, "exp": 3, "defense": 2, "toughness": 1, "attribute": "water" }
         };
 
         let currentMeat = "normal-meat";
         let meatHp = meatData[currentMeat].hp;
-        let meatPoints = 0;
-        let coins = 0;
+        let meatPoints = 1;
+        let coins = 3;
         let experience = 0;
         let lastAttackTime = 0;
         let currentWeapon = 'fist';
@@ -139,7 +142,7 @@
             "minigun": { "damage": 1.5, "cooldown": 60, "price": 20, "requiredExp": 67, "attribute": "electricity" },
             "poison-spear": { 
                 "damage": 8, "cooldown": 1250, "price": 15, "requiredExp": 15, 
-                "attribute": "earth", "poison": { "duration": 3000, "damagePerSecond": 2 }
+                "attribute": "grass", "poison": { "duration": 3000, "damagePerSecond": 2 }
             },
             "rune-great-blade": { "damage": 24, "cooldown": 1310, "price": 30, "requiredExp": 150, "attribute": "true" },
             "spider-sword": { 
