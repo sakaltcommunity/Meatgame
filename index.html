@@ -36,8 +36,9 @@
             color: #FF0000;
             font-weight: bold;
             position: absolute;
-            top: -20px;
-            left: 50%;
+            top: 10px;
+            right: 10px;
+            font-size: 20px;
         }
         button {
             margin-top: 10px;
@@ -78,12 +79,28 @@
     </div>
 
     <script>
+        // 属性情報
+        const attributes = {
+            fire: { strongAgainst: ["earth"], resistantTo: ["water"] },
+            earth: { strongAgainst: ["water"], resistantTo: ["fire"] },
+            water: { strongAgainst: ["fire"], resistantTo: ["earth"] },
+            wind: { strongAgainst: ["fire"], resistantTo: [] },
+            grass: { strongAgainst: ["water"], resistantTo: [] },
+            iron: { strongAgainst: ["earth"], resistantTo: ["fire"] },
+            electricity: { strongAgainst: ["water"], resistantTo: [] },
+            light: { strongAgainst: ["dark"], resistantTo: [] },
+            dark: { strongAgainst: ["light"], resistantTo: [] },
+            true: { strongAgainst: [], resistantTo: [] },
+            ancient: { strongAgainst: [], resistantTo: [] },
+            divine: { strongAgainst: [], resistantTo: [] }
+        };
+
         // 肉のデータ
         const meatData = {
-            "normal-meat": { "hp": 20, "exp": 4, "defense": 5, "toughness": 2 },
-            "tough-meat": { "hp": 40, "exp": 5, "defense": 24, "toughness": 10 },
-            "atlas-meat": { "hp": 256, "exp": 12, "defense": 26, "toughness": 6 },
-            "fish-meat": { "hp": 15, "exp": 3, "defense": 2, "toughness": 1 }
+            "normal-meat": { "hp": 20, "exp": 4, "defense": 5, "toughness": 2, "attribute": "fire" },
+            "tough-meat": { "hp": 40, "exp": 5, "defense": 24, "toughness": 10, "attribute": "earth" },
+            "atlas-meat": { "hp": 256, "exp": 12, "defense": 26, "toughness": 6, "attribute": "water" },
+            "fish-meat": { "hp": 15, "exp": 3, "defense": 2, "toughness": 1, "attribute": "water" }
         };
 
         let currentMeat = "normal-meat";
@@ -94,6 +111,9 @@
         let lastAttackTime = 0;
         let currentWeapon = 'fist';
         let attackCooldown = false;
+        let poisonEffect = false;
+        let poisonDamage = 0;
+        let poisonDuration = 0;
 
         const meatElement = document.getElementById('meat');
         const meatHpElement = document.getElementById('meat-hp');
@@ -108,23 +128,23 @@
         const meatSelect = document.getElementById('meat-select');
 
         const weapons = {
-            "fist": { "damage": 3, "cooldown": 1000 },
-            "stone-sword": { "damage": 7, "cooldown": 500, "price": 5, "requiredExp": 0 },
-            "grade-blade": { "damage": 10, "cooldown": 1310, "price": 10, "requiredExp": 10 },
-            "rapier": { "damage": 4, "cooldown": 250, "price": 7, "requiredExp": 30 },
-            "fire_saber": { "damage": 6.75, "cooldown": 625, "price": 7, "requiredExp": 20 },
-            "sequoia-blade": { "damage": 8.75, "cooldown": 625, "price": 10, "requiredExp": 60 },
-            "lithium_saber": { "damage": 12.5, "cooldown": 625, "price": 12, "requiredExp": 67 },
-            "ice_saber": { "damage": 6.85, "cooldown": 616, "price": 9, "requiredExp": 40 },
-            "minigun": { "damage": 1.5, "cooldown": 60, "price": 20, "requiredExp": 67 },
+            "fist": { "damage": 3, "cooldown": 1000, "attribute": "earth" },
+            "stone-sword": { "damage": 7, "cooldown": 500, "price": 5, "requiredExp": 0, "attribute": "fire" },
+            "grade-blade": { "damage": 10, "cooldown": 1310, "price": 10, "requiredExp": 10, "attribute": "earth" },
+            "rapier": { "damage": 4, "cooldown": 250, "price": 7, "requiredExp": 30, "attribute": "wind" },
+            "fire_saber": { "damage": 6.75, "cooldown": 625, "price": 7, "requiredExp": 20, "attribute": "fire" },
+            "sequoia-blade": { "damage": 8.75, "cooldown": 625, "price": 10, "requiredExp": 60, "attribute": "earth" },
+            "lithium_saber": { "damage": 12.5, "cooldown": 625, "price": 12, "requiredExp": 67, "attribute": "fire" },
+            "ice_saber": { "damage": 6.85, "cooldown": 616, "price": 9, "requiredExp": 40, "attribute": "water" },
+            "minigun": { "damage": 1.5, "cooldown": 60, "price": 20, "requiredExp": 67, "attribute": "electricity" },
             "poison-spear": { 
                 "damage": 8, "cooldown": 1250, "price": 15, "requiredExp": 15, 
-                "poison": { "duration": 3000, "damagePerSecond": 2 }
+                "attribute": "earth", "poison": { "duration": 3000, "damagePerSecond": 2 }
             },
-            "rune-great-blade": { "damage": 24, "cooldown": 1310, "price": 30, "requiredExp": 150 },
+            "rune-great-blade": { "damage": 24, "cooldown": 1310, "price": 30, "requiredExp": 150, "attribute": "true" },
             "spider-sword": { 
                 "damage": 5.95, "cooldown": 625, "price": 20, "requiredExp": 60, 
-                "poison": { "duration": 5000, "damagePerSecond": 3 }
+                "attribute": "dark", "poison": { "duration": 5000, "damagePerSecond": 3 }
             }
         };
 
@@ -154,7 +174,12 @@
                 damage = Math.max(1, damage * (timeDifference / weapon.cooldown));
             }
 
-            // 新しいダメージ計算式
+            // 属性による相性を計算
+            const meatAttribute = meatData[currentMeat].attribute;
+            const weaponAttribute = weapons[currentWeapon].attribute;
+            damage = calculateAttributeDamage(damage, weaponAttribute, meatAttribute);
+
+            // 防御力と耐久力を考慮してダメージを計算
             const meatDefense = meatData[currentMeat].defense;
             const meatToughness = meatData[currentMeat].toughness;
             damage = calculateDamage(damage, meatDefense, meatToughness);
@@ -175,90 +200,96 @@
             lastAttackTime = currentTime;
 
             if (weapon.poison) {
-                applyPoison();
+                applyPoison(weapon.poison);
             }
         }
 
+        function calculateAttributeDamage(damage, attackerAttribute, defenderAttribute) {
+            const attacker = attributes[attackerAttribute];
+            const defender = attributes[defenderAttribute];
+
+            // 攻撃者が強い属性に対してダメージ倍率を上げる
+            if (attacker.strongAgainst.includes(defenderAttribute)) {
+                return damage * 1.5;  // 例えば強い属性には1.5倍
+            }
+
+            // 防御者が攻撃者の属性に対して耐性がある場合、ダメージ倍率を下げる
+            if (defender.resistantTo.includes(attackerAttribute)) {
+                return damage * 0.7;  // 耐性がある場合は0.7倍
+            }
+
+            return damage; // 特に倍率がなければ元のダメージ
+        }
+
         function calculateDamage(damage, defense, toughness) {
-            const reducedDamage = damage - (defense / 12.5 + (toughness - damage / 4));
-            return Math.max(1, Math.min(damage, reducedDamage));
+            return damage * (1 - defense / 100) - toughness;
         }
 
         function showDamage(damage) {
-            const damageElement = document.createElement('div');
-            damageElement.classList.add('damage-output');
-            damageElement.textContent = `${damage}`;
-            damageOutputElement.appendChild(damageElement);
-            
-            setTimeout(() => {
-                damageElement.remove();
-            }, 500);
+            damageOutputElement.textContent = `ダメージ: ${damage}`;
         }
 
         function sellMeatPoints() {
             coins += meatPoints;
             meatPoints = 0;
-            meatPointsElement.textContent = meatPoints;
             coinsElement.textContent = coins;
-        }
-
-        function unlockWeapons() {
-            for (const weaponKey of buyWeaponList) {
-                const weapon = weapons[weaponKey];
-                if (experience >= weapon.requiredExp && !availableWeapons.includes(weaponKey)) {
-                    const option = document.createElement('option');
-                    option.value = weaponKey;
-                    option.text = weaponKey;
-                    buyWeaponSelect.add(option);
-                }
-            }
+            meatPointsElement.textContent = meatPoints;
         }
 
         function buyWeapon() {
             const selectedWeapon = buyWeaponSelect.value;
-            if (selectedWeapon === "") return; // 武器が選択されていない場合は何もしない
+            const weapon = weapons[selectedWeapon];
 
-            const weaponData = weapons[selectedWeapon];
-
-            if (coins >= weaponData.price) {
-                coins -= weaponData.price;
-                availableWeapons.push(selectedWeapon);
-                updateWeaponSelect();
-                coinsElement.textContent = coins;
-
-                alert(`${selectedWeapon} を購入しました！`);
-            } else {
-                alert("コインが足りません！");
+            if (selectedWeapon && !availableWeapons.includes(selectedWeapon)) {
+                if (weapon.price <= coins && experience >= weapon.requiredExp) {
+                    availableWeapons.push(selectedWeapon);
+                    coins -= weapon.price;
+                    coinsElement.textContent = coins;
+                    updateWeaponSelect();
+                }
             }
         }
 
-        function updateWeaponSelect() {
-            weaponSelect.innerHTML = '';
-            availableWeapons.forEach(weapon => {
-                const option = document.createElement('option');
-                option.value = weapon;
-                option.text = weapon;
-                weaponSelect.add(option);
-            });
-        }
+        function applyPoison(poison) {
+            if (!poisonEffect) {
+                poisonEffect = true;
+                poisonDamage = poison.damagePerSecond;
+                poisonDuration = poison.duration;
 
-        function applyPoison() {
-            const weapon = weapons[currentWeapon];
-            const poison = weapon.poison;
-            if (poison) {
-                let poisonTime = 0;
-                const poisonInterval = setInterval(() => {
-                    poisonTime += 1000;
-                    meatHp -= poison.damagePerSecond;
-                    meatHpElement.textContent = Math.max(0, Math.floor(meatHp));
-
-                    if (poisonTime >= poison.duration || meatHp <= 0) {
-                        clearInterval(poisonInterval);
+                // 毎秒ダメージを与える
+                setInterval(() => {
+                    if (poisonDuration > 0) {
+                        meatHp -= poisonDamage;
+                        meatHpElement.textContent = Math.max(0, meatHp).toFixed(2);
+                        poisonDuration -= 1000;
+                    } else {
+                        poisonEffect = false;
                     }
                 }, 1000);
             }
         }
 
+        function updateWeaponSelect() {
+            weaponSelect.innerHTML = "";
+            availableWeapons.forEach(weapon => {
+                const option = document.createElement('option');
+                option.value = weapon;
+                option.textContent = weapon.charAt(0).toUpperCase() + weapon.slice(1);
+                weaponSelect.appendChild(option);
+            });
+        }
+
+        function unlockWeapons() {
+            buyWeaponSelect.innerHTML = "";
+            buyWeaponList.forEach(weapon => {
+                const option = document.createElement('option');
+                option.value = weapon;
+                option.textContent = weapon.charAt(0).toUpperCase() + weapon.slice(1);
+                buyWeaponSelect.appendChild(option);
+            });
+        }
+
+        unlockWeapons();
         updateWeaponSelect();
     </script>
 </body>
